@@ -1,0 +1,27 @@
+{
+  "bot_token": "",
+  "debug" : true,
+  "MemberHandler" : {
+    "Welcome" : {
+      "text_CN" : "欢迎 {username} \n 建议阅读群公约 : \n",
+      "text_ALL" : "Welcome {username}, please read the rules : \n",
+      "is_markdown" : true
+
+    },
+    "Auth" : {
+      "text_CN" : "欢迎 {username} ,请点击 {correct_button} 来通过验证",
+      "text_ALL" : "Welcome {username} ,Please click the  {correct_button} to verify you are human",
+      "all_buttons" : [
+        "正确的按钮",
+        "大概是正确的按钮",
+        "白脸角鸮",
+        "咕哩咕",
+        "不能吃的按钮"
+      ],
+      "number_of_button" : 4,
+      "auth_timeout" : 300,
+      "fail_timeout" : 3600,
+      "number_of_button_per_row" : 2
+    }
+  }
+}

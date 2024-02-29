@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "exastris-bot"
+version = "0.1.0"
+description = ""
+authors = ["Tim <sht852680833@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+python-telegram-bot = {version="^20.8",extras=["callback-data","job-queue"]}
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
