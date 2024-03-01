@@ -10,6 +10,22 @@ python = "^3.11"
 python-telegram-bot = {version="^20.8",extras=["callback-data","job-queue"]}
 
 
+
+[tool.pdm.build]
+includes = []
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[project]
+authors = [
+    {name = "Tim", email = "sht852680833@gmail.com"},
+]
+requires-python = ">=3.11,<4.0"
+dependencies = [
+    "python-telegram-bot[callback-data,job-queue]<21.0,>=20.8",
+]
+name = "exastris-bot"
+version = "0.1.0"
+description = ""
+readme = "README.md"
