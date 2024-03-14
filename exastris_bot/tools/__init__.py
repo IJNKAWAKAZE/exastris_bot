@@ -1,0 +1,1 @@
+from exastris_bot.tools.log_on_trigger import log_on_trigger
