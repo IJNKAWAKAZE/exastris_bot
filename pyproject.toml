@@ -21,7 +21,7 @@ build-backend = "poetry.core.masonry.api"
 authors = [
     {name = "Tim", email = "sht852680833@gmail.com"},
 ]
-requires-python = ">=3.11,<4.0"
+requires-python = ">=3.12,<4.0"
 dependencies = [
     "python-telegram-bot[callback-data,job-queue]<21.0,>=20.8",
 ]
