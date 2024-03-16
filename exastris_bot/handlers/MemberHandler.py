@@ -95,29 +95,32 @@ async def new_member_handler(update: Update, context: CallbackContext, member: U
     if is_invited:
         await welcome_handler(update.message.chat_id, context, member)
     else:
-        chat = await context.bot.get_chat(chat_id=update.message.chat_id)
         await update.message.chat.restrict_member(
             member.id,
             ChatPermissions.no_permissions())
         question, answer = MemberHandlerConfig.random_select_button()
         keyboard = [[]]
         for i, x in enumerate(question):
-            keyboard[-1].append((x,i,ClickControl.MAKER))
+            keyboard[-1].append((x, i, ClickControl.MAKER))
             if len(keyboard[-1]) >= MemberHandlerConfig.AuthButtonsPerRow:
                 keyboard.append([])
         keyboard.append([
-            ("ADMIN KILL", -1,ClickControl.ADMIN),
+            ("ADMIN KILL", -1, ClickControl.ADMIN),
             ("ADMIN PASS", -2, ClickControl.ADMIN)
         ])
         msg = (MemberHandlerConfig.AuthMessage_CN
                if member.language_code is not None and "zh" not in member.language_code else
                MemberHandlerConfig.AuthMessage_ALL).format(username=member.username, correct_button=question[answer])
-        result = await select_value_by_inline_keyboard(context.bot,update,msg,selection=keyboard,replay_to_message=False,timeout=MemberHandlerConfig.AuthAuthTimeOut)
-        if result is None or result!=answer:
-            await context.bot.banChatMember(chat_id=update.message.chat_id, user_id=member.id,
-                                            until_date=MemberHandlerConfig.AuthFailTimeOut)
+        result = await select_value_by_inline_keyboard(context.bot, update, msg, selection=keyboard,
+                                                       replay_to_message=False,
+                                                       timeout=MemberHandlerConfig.AuthAuthTimeOut)
+        print(f"{result is None or result != answer or result != -2}")
+
+        if result is not None and (result==answer or result==-2):
+            await welcome_handler(update.message.chat_id, context, member)
         else:
-            await welcome_handler(update.message.chat_id,context,member)
+            await context.bot.banChatMember(chat_id=update.message.chat_id, user_id=member.id,
+                                                until_date=MemberHandlerConfig.AuthFailTimeOut)
 
 
 @log_on_trigger(logging.DEBUG)
