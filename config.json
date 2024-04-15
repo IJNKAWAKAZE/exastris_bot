@@ -1,5 +1,5 @@
 {
-  "bot_token": "",
+  "bot_token": "6757667736:AAE9nH2J1hWQ_JANgAu7VcX5NKa8eOcGrxY",
   "debug" : true,
   "MemberHandler" : {
     "Welcome" : {
@@ -19,8 +19,8 @@
         "不能吃的按钮"
       ],
       "number_of_button" : 4,
-      "auth_timeout" : 300,
-      "fail_timeout" : 3600,
+      "auth_timeout" : 120,
+      "fail_timeout" : 60,
       "number_of_button_per_row" : 2
     }
   }

@@ -1,11 +1,12 @@
 import datetime
 import logging
 
-from telegram.ext import ApplicationBuilder, Application,MessageHandler
+from telegram.ext import ApplicationBuilder, Application
 from typing import NoReturn
-from logging import info,warn,error,fatal
-from exastris_bot.handlers import init_handlers,Handlers,job_queue
-class ExBot():
+from exastris_bot.handlers import init_handlers, Handlers, job_queue
+
+
+class ExBot:
     BOT_START_TIME: datetime.datetime
 
     def __init__(self, config: dict):
@@ -19,7 +20,6 @@ class ExBot():
         for init_functions in init_handlers:
             init_functions(config)
         self.application.add_handlers(Handlers)
-
 
     def run(self) -> NoReturn:
         self.BOT_START_TIME = datetime.datetime.now()

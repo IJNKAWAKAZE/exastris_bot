@@ -1,21 +1,16 @@
-import asyncio
-
 import logging
 import random
 from typing import Optional
 
-from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
-from telegram import ChatMember, User, Chat
-from telegram.constants import ParseMode
 from telegram import ChatPermissions
-from telegram.ext import CallbackContext, ChatMemberHandler, CallbackQueryHandler
+from telegram import Update
+from telegram import User
+from telegram.constants import ParseMode
+from telegram.ext import CallbackContext, CallbackQueryHandler, MessageHandler, filters
 
-from exastris_bot.tools import log_on_trigger, no_backtrace, select_value_by_inline_keyboard, \
-    universal_callback_handler, ClickControl, UNIVERSAL_CALLBACK_PREFIX
+from exastris_bot.tools import log_on_trigger, select_value_by_inline_keyboard, universal_callback_handler, \
+    no_backtrace
 
-MEMBER_JOIN_PREFIX = "MJ"
-ADMIN_PASS = -1
-ADMIN_KILL = -2
 DEBUG = False
 
 
@@ -62,20 +57,43 @@ class MemberHandlerConfig:
 
 
 @no_backtrace
-@log_on_trigger(logging.INFO)
-async def MemberUpdateCallback(update: Update, context: CallbackContext) -> None:
-    massage = update.message
-    if massage is None:
-        return
-    if massage.new_chat_members:
-        for member in massage.new_chat_members:
-            await new_member_handler(update, context, member, bool(update.chat_member.invite_link))
-        return
-    elif massage.left_chat_member:
-        return await left_chat_member_handler(update, context)
-
-
 @log_on_trigger(logging.DEBUG)
+async def new_member_handler(update: Update, context: CallbackContext) -> None:
+    message = update.effective_message
+    for member in message.new_chat_members:
+        logging.info(f"New member triggered: {member.full_name}")
+        if member.is_bot:
+            return
+        else:
+            await context.bot.restrict_chat_member(message.chat_id, member.id,
+                                                   ChatPermissions.no_permissions())
+            question, answer = MemberHandlerConfig.random_select_button()
+            keyboard = [[]]
+            for i, x in enumerate(question):
+                keyboard[-1].append((x, i))
+                if len(keyboard[-1]) >= MemberHandlerConfig.AuthButtonsPerRow:
+                    keyboard.append([])
+            keyboard.append([
+                ("ADMIN KILL", -1),
+                ("ADMIN PASS", -2)
+            ])
+            msg = (MemberHandlerConfig.AuthMessage_CN
+                   if member.language_code is not None and "zh" not in member.language_code else
+                   MemberHandlerConfig.AuthMessage_ALL).format(username=member.full_name,
+                                                               correct_button=question[answer])
+            await select_value_by_inline_keyboard(context.bot, update, msg, selection=keyboard,
+                                                  answer=question[answer],
+                                                  timeout=MemberHandlerConfig.AuthAuthTimeOut,
+                                                  fail_timeout=MemberHandlerConfig.AuthFailTimeOut)
+
+
+@no_backtrace
+@log_on_trigger(logging.DEBUG)
+async def left_chat_member_handler(update: Update, context: CallbackContext):
+    message = update.effective_message
+    await message.delete()
+
+
 async def welcome_handler(chat_id: int, context: CallbackContext, member: User) -> None:
     welcome_message = MemberHandlerConfig.WelcomeMessage_CN
     if member.language_code is not None and "zh" in member.language_code:
@@ -83,50 +101,10 @@ async def welcome_handler(chat_id: int, context: CallbackContext, member: User) 
     else:
         welcome_message = MemberHandlerConfig.WelcomeMessage_ALL
     await context.bot.send_message(chat_id=chat_id,
-                                   text=welcome_message.format(username=member.username),
+                                   text=welcome_message.format(username=member.full_name),
                                    parse_mode=ParseMode.MARKDOWN_V2)
 
 
-@log_on_trigger(logging.DEBUG)
-async def new_member_handler(update: Update, context: CallbackContext, member: User, is_invited: bool) -> None:
-    logging.info(f"New member triggered: {member.username}")
-    if member.is_bot:
-        return
-    if is_invited:
-        await welcome_handler(update.message.chat_id, context, member)
-    else:
-        await update.message.chat.restrict_member(
-            member.id,
-            ChatPermissions.no_permissions())
-        question, answer = MemberHandlerConfig.random_select_button()
-        keyboard = [[]]
-        for i, x in enumerate(question):
-            keyboard[-1].append((x, i, ClickControl.MAKER))
-            if len(keyboard[-1]) >= MemberHandlerConfig.AuthButtonsPerRow:
-                keyboard.append([])
-        keyboard.append([
-            ("ADMIN KILL", -1, ClickControl.ADMIN),
-            ("ADMIN PASS", -2, ClickControl.ADMIN)
-        ])
-        msg = (MemberHandlerConfig.AuthMessage_CN
-               if member.language_code is not None and "zh" not in member.language_code else
-               MemberHandlerConfig.AuthMessage_ALL).format(username=member.username, correct_button=question[answer])
-        result = await select_value_by_inline_keyboard(context.bot, update, msg, selection=keyboard,
-                                                       replay_to_message=False,
-                                                       timeout=MemberHandlerConfig.AuthAuthTimeOut)
-        print(f"{result is None or result != answer or result != -2}")
-
-        if result is not None and (result==answer or result==-2):
-            await welcome_handler(update.message.chat_id, context, member)
-        else:
-            await context.bot.banChatMember(chat_id=update.message.chat_id, user_id=member.id,
-                                                until_date=MemberHandlerConfig.AuthFailTimeOut)
-
-
-@log_on_trigger(logging.DEBUG)
-async def left_chat_member_handler(update: Update, context: CallbackContext):
-    pass
-
-
-MemberHandler = ChatMemberHandler(MemberUpdateCallback, block=False)
-MemberJoinCallBack = CallbackQueryHandler(universal_callback_handler, pattern="^" + MEMBER_JOIN_PREFIX, block=False)
+NewMemberHandler = MessageHandler(filters=filters.StatusUpdate.NEW_CHAT_MEMBERS, callback=new_member_handler)
+LeftMemberHandler = MessageHandler(filters=filters.StatusUpdate.LEFT_CHAT_MEMBER, callback=left_chat_member_handler)
+MemberJoinCallBack = CallbackQueryHandler(universal_callback_handler, pattern=r"^MJ", block=False)

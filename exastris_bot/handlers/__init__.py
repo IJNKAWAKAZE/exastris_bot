@@ -1,8 +1,10 @@
-from exastris_bot.handlers.MemberHandler import MemberHandler,MemberHandlerConfig,MemberJoinCallBack
+from exastris_bot.handlers.MemberHandler import NewMemberHandler, MemberHandlerConfig, MemberJoinCallBack, \
+    LeftMemberHandler
 from telegram.ext import JobQueue
 
 Handlers = [
-    MemberHandler,
+    NewMemberHandler,
+    LeftMemberHandler,
     MemberJoinCallBack
     ]
 init_handlers = [
